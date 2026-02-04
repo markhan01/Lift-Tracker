@@ -1,0 +1,36 @@
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: lift-tracker-db
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=${SQL_SA_PASSWORD}
+      - MSSQL_PID=Developer
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+    networks:
+      - lift-tracker-network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: lift-tracker-api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=LiftTrackerDB;User Id=sa;Password=${SQL_SA_PASSWORD};TrustServerCertificate=True;
+    ports:
+      - "5000:8080"
+    depends_on:
+      - sqlserver
+    networks:
+      - lift-tracker-network
+
+volumes:
+  sqlserver_data:
+
+networks:
+  lift-tracker-network:
+    driver: bridge
